@@ -225,7 +225,7 @@
                 <div class="row justify-content-center">
                     <table class="text-center">
                         <tr>
-                            <th>Menu List</th>
+                            <th><h2>Menu List</h2></th>
                         </tr>
                         <tr>
                             <td>
@@ -258,10 +258,41 @@
                             </td>
                         </tr>
                         <tr>
-                            <td>
-                                <input type="button" class="btn btn-outline-primary" readonly="readonly" value="Show me something 🦄" id="btnGetImage"/>
-                            </td>
-                        </tr>
+							<td>
+								<table class="table table-bordered">
+									<tr>
+										<td rowspan="2">
+											<h4>
+											Pixel of image 🖼️
+											</h4>
+											<select class="selectpicker" multiple data-actions-box="true" id="ddlSelectPixel">
+												<option value="300">300x300</option>
+												<option value="600">600x600</option>
+												<option value="900">900x900</option>
+											</select>
+											</td>
+										<td>
+											<input type="button" class="btn btn-outline-primary" readonly="readonly" value="Show me something 🦄" id="btnGetImage"/>
+										</td>
+									</tr>	
+									<tr>
+										<td>
+											<div class="row">
+												<div class="col-sm-4">
+													<input class="form-control" type="number" id="intervalMinute" min="1" title="Input minute like 1 or 0.1 ⏳" placeholder="minute"/>
+												</div>
+												<div class="col-sm-4">
+													<span id="displaySecond" class="">seconds</span>
+												</div>
+												<div class="col-sm-4">
+													<input type="checkbox" id="autoGetSwitcher" data-toggle="toggle" data-onstyle="success" data-offstyle="danger" title="Auto Get Image" data-style="slow" data-on="Auto ▶️ " data-off="Off 🈲" data-width="100px" data-height="30px">
+												</div>
+											</div>									
+										</td>
+									</tr>
+								</table>											
+							</td>				
+						</tr>
                         <tr>					
                             <td>
                                 <div class="container">
@@ -279,7 +310,7 @@
                                             <input type="button" class="btn btn-outline-primary btnSearchImage" readonly="readonly" value="Search Medium Image 🖼️" data-imgwidth="600" data-imgheight="600"/>
                                         </div>
                                         <div class="col-sm">
-                                            <input type="button" class="btn btn-outline-primary btnSearchImage" readonly="readonly" value="Search Large Image 🖼️" data-imgwidth="1200" data-imgheight="1200"/>
+                                            <input type="button" class="btn btn-outline-primary btnSearchImage" readonly="readonly" value="Search Large Image 🖼️" data-imgwidth="1000" data-imgheight="1000"/>
                                         </div>
                                     </div>
                                 </div>							 
@@ -336,6 +367,11 @@
             var rates = $('#tableCurrencyRate > tbody > tr').eq(index-1).find('.currency-rates').data('rate');
             $('#tableCurrencyRate > tbody > tr').eq(index-1).find('.currency-rates').val(amount*rates)
         }
+
+		function LoopGetImage(){
+			console.log('Auto trigger on: '+new moment().format('DD/MM/YYYY HH:mm:ss.SSS'))
+				$('#btnGetImage').trigger('click')					
+			}
 
 
         const happyEmojiList = ['😀','😁','😂','🤣','😃','😄','😆','😉','😊','😎','😍','😗','😙','😚','🙂','🤗','😏','😛','😜','😝','🤤','🤪','🤠','🤭','🧐','💩']
@@ -408,6 +444,7 @@ $('#btnLogout').on('click',function(){
 })
 
 $('#themeSwitcher').bootstrapToggle()
+$('#autoGetSwitcher').bootstrapToggle()
 
 $('#themeSwitcher').on('change',function(){
 	if ($('#themeSwitcher').prop('checked') == true){
@@ -420,6 +457,45 @@ $('#themeSwitcher').on('change',function(){
 		$('body').removeClass('dark-theme')
 		$('table').removeClass('table-dark')
 		$('.modal-content').removeClass('dark-theme')
+	}
+})
+
+$('#intervalMinute').on('input',function(){
+	if($(this).val() > 0){
+		$('#displaySecond').text($(this).val()*60 +' seconds')
+	}else{
+	$('#displaySecond').text('seconds')
+	}
+})
+
+var intervalFunction;
+
+$('#autoGetSwitcher').on('change',function(){
+	var swalMsg = '';
+	if ($('#autoGetSwitcher').prop('checked') == true){
+	
+		if ($('#ddlSelectPixel').val().length <= 0){
+			swalMsg = swalMsg + 'Please select pixel of image\n';
+			$('#autoGetSwitcher').bootstrapToggle('off')			
+		}
+		
+		if ($('#intervalMinute').val() == ''){
+		  $('#autoGetSwitcher').bootstrapToggle('off')
+			//Swal.fire('Please input minute interval')
+			swalMsg = swalMsg + 'Please input minute interval\n';
+		}
+		
+		if (swalMsg!= null && swalMsg.length > 0){
+			Swal.fire(swalMsg)
+			return false;
+		}
+		
+		intervalFunction = setInterval(function(){
+			LoopGetImage()
+		}, $('#intervalMinute').val() * 60000);	
+		
+	}else{
+			clearInterval(intervalFunction);
 	}
 })
 
@@ -566,60 +642,100 @@ $('#btnGetQuoteGarden').on('click',function(){
 	})
 })
 
+$('#ddlSelectPixel').on('change',function(){
+	if(($.inArray(('300'), $('#ddlSelectPixel').val()) >=0 && $.inArray(('600'), $('#ddlSelectPixel').val()) >=0 && $.inArray(('900'), $('#ddlSelectPixel').val()) >=0)){
+		//$('#ddlSelectPixel').val(['300','600','900']).selectpicker('refresh')
+		$('#ddlSelectPixel').parent().find('button[data-id="ddlSelectPixel"]').attr('title','All 💯').find('.filter-option-inner-inner').text('All 💯')
+	}else{
+		$('#ddlSelectPixel').val($(this).val()).selectpicker('refresh')
+	}
+})
+
 $('#btnGetImage').on('click',function(){
-	 Loading.fire();
-	 var stringQuote;
-	 var lgth = 0;
-	 var longest;
-	 var secondLongest;
-		$.ajax({
-		url: 'https://quote-garden.herokuapp.com/quotes/random',
-		type: 'GET',
-		success: function (result) {
-			// stringQuote = result.quoteText.replace(/[^0-9a-z ]/gi, '').split(' ')
-			stringQuote = $.grep(result.quoteText.replace(/[^0-9a-z ]/gi, '').split(' '),function(text){
-				return text.length > 2
-			})
-			
-			for(var i=0; i < stringQuote.length; i++){
-				if(stringQuote[i].length > lgth){
-					lgth = stringQuote[i].length;
-					longest = stringQuote[i];
-				}      
-			}
-			lgth = 0;
-			stringQuote = $.grep(stringQuote,function(text){
-													 return text != longest;
-													 })
-													 
-			for(var i=0; i < stringQuote.length; i++){
-				if(stringQuote[i].length > lgth){
-					lgth = stringQuote[i].length;
-					secondLongest = stringQuote[i];
-				}      
-			}
-			console.log(longest +' '+secondLongest )
-			//stringQuote[Math.floor((Math.random() * (stringQuote.length)) + 0)]
-			Swal.fire({
-				title: result.quoteText,
-				text: 'By - ' + result.quoteAuthor,
-				imageUrl: 'https://source.unsplash.com/random/300x300?'+longest+','+secondLongest,
-				imageWidth: 300,
-				imageHeight: 300,
-				imageAlt: 'Random image',
-				animation: true
-			})
-			 $('.swal2-header').find('img').attr('id','quoteImageID').attr('onmouseover','ShowFullImage(this)').attr('onmouseleave','BorderRadiusImage(this)').css('border-radius','50%')
-		},
-		error: function (xhr, status, error) {
-
-		},
-		complete: function () {
-			Loading.hideLoading()
+	
+	var imgPixel;
+	if ($('#autoGetSwitcher').prop('checked') == true){
+		imgPixel = $('#ddlSelectPixel').val()
+	}else{
+		if ($('#ddlSelectPixel').val() > 0){
+			imgPixel = $('#ddlSelectPixel').val()
 		}
-	})
+		else{
+			imgPixel = [300,600,900]
+		}
+	}
+	
+	 Loading.fire();
+	// var imgPixel = [300,600,900]
+	var randomPixel = imgPixel[Math.floor((Math.random() * (imgPixel.length)) + 0)]
+	var stringQuote;
+	var lgth = 0;
+	var longest;
+	var secondLongest;
+	   $.ajax({
+	   url: 'https://quote-garden.herokuapp.com/quotes/random',
+	   type: 'GET',
+	   crossDomain: true,
+	   success: function (result) {
+		   // stringQuote = result.quoteText.replace(/[^0-9a-z ]/gi, '').split(' ')
+		   stringQuote = $.grep(result.quoteText.replace(/[^0-9a-z- ]/gi, '').split(' '),function(text){
+			   return text.length > 2
+		   })
+		   
+		   for(var i=0; i < stringQuote.length; i++){
+			   if(stringQuote[i].length > lgth){
+				   lgth = stringQuote[i].length;
+				   longest = stringQuote[i];
+			   }      
+		   }
+		   lgth = 0;
+		   stringQuote = $.grep(stringQuote,function(text){
+													return text != longest;
+													})
+													
+		   for(var i=0; i < stringQuote.length; i++){
+			   if(stringQuote[i].length > lgth){
+				   lgth = stringQuote[i].length;
+				   secondLongest = stringQuote[i];
+			   }      
+		   }
+		   //console.log(longest +' '+secondLongest )
+		   //stringQuote[Math.floor((Math.random() * (stringQuote.length)) + 0)]
+		   Swal.fire({
+			   title: result.quoteText,
+			   text: 'By - ' + (result.quoteAuthor || personEmojiList[Math.floor((Math.random() * (personEmojiList.length)) + 0)]),
+			   imageUrl: 'https://source.unsplash.com/random/'+randomPixel+'x'+randomPixel+'?'+longest+','+secondLongest,
+			   imageWidth: randomPixel,
+			   imageHeight: randomPixel,
+			   imageAlt: 'Random image',
+			   animation: true,
+			   width: randomPixel * 1.2
+		   })
+			$('.swal2-header').find('img').attr('id','quoteImageID').attr('onmouseover','ShowFullImage(this)').attr('onmouseleave','BorderRadiusImage(this)').css('border-radius','50%').attr('title','['+longest+'] ['+secondLongest+']')
+			$('.swal2-header').on('mouseover',function(){
+				if ($('#autoGetSwitcher').prop('checked') == true){
+					 console.log('Auto trigger pause on: '+new moment().format('DD/MM/YYYY HH:mm:ss.SSS'))
+				  clearInterval(intervalFunction);
+				}
+			})
+			$('.swal2-header').on('mouseleave',function(){
+				if ($('#autoGetSwitcher').prop('checked') == true){
+				  console.log('Auto trigger resume on: '+new moment().format('DD/MM/YYYY HH:mm:ss.SSS'))
+					intervalFunction = setInterval(function(){
+						LoopGetImage()
+					}, $('#intervalMinute').val() * 60000);		
+				}
+			})
+	   },
+	   error: function (xhr, status, error) {
 
-	//Loading.hideLoading()
+	   },
+	   complete: function () {
+		   Loading.hideLoading()
+	   }
+   })
+
+   //Loading.hideLoading()
 })
 
 $('.btnSearchImage').on('click',function(){
